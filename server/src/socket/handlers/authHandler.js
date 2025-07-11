@@ -6,9 +6,6 @@ import jwt from "jsonwebtoken";
 // Handle user registration
 export const handleRegisterUser = (socket) => {
   return async (userData) => {
-    console.log("🚀 registerUser event received:", userData);
-    console.log("Socket ID:", socket.id);
-
     const { username, email, password } = userData;
     try {
       // Check if user already exists
@@ -25,10 +22,11 @@ export const handleRegisterUser = (socket) => {
       const newUser = new User({
         username,
         email,
-        password, // Password will be hashed by the pre-save middleware
+        password, // * Password will be hashed by the pre-save middleware
       });
 
       const savedUser = await newUser.save();
+      // !! Log for debugging
       console.log("✅ User registered successfully:", savedUser.username);
 
       socket.emit("registerSuccess", {
@@ -49,7 +47,6 @@ export const handleRegisterUser = (socket) => {
 // Handle user login
 export const handleLoginUser = (socket, io) => {
   return async (loginData) => {
-    console.log("🔐 loginUser event received:", loginData);
     const { username, password } = loginData;
 
     try {
@@ -72,6 +69,14 @@ export const handleLoginUser = (socket, io) => {
       // Generate tokens
       const { accessToken, refreshToken } =
         await generateAccessAndRefreshTokens(user._id);
+
+      // set online status
+      user.isOnline = true;
+      user.socketId = socket.id; // Store the socket ID for real-time updates
+      await user.save({
+        validateModifiedOnly: true,
+        runValidators: true,
+      });
 
       console.log("✅ User logged in successfully:", user.username);
 
