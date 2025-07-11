@@ -15,6 +15,7 @@ const userSchema = new Schema(
     groups: [{ type: Schema.Types.ObjectId, ref: "Group" }], // Array of group IDs
     accessToken: { type: String, default: "" },
     refreshToken: { type: String, default: "" },
+    unreadMessages: [{ type: Schema.Types.ObjectId, ref: "UserChat" }], // Array of message IDs that are unread
   },
   {
     timestamps: true,
@@ -133,6 +134,33 @@ userSchema.methods.removeGroup = function (groupId) {
     (id) => id.toString() !== groupId.toString()
   );
   return this.save();
+};
+
+// Method to add unread message
+userSchema.methods.addUnreadMessage = function (messageId) {
+  if (!this.unreadMessages.includes(messageId)) {
+    this.unreadMessages.push(messageId);
+  }
+  return this.save();
+};
+
+// Method to remove unread message
+userSchema.methods.removeUnreadMessage = function (messageId) {
+  this.unreadMessages = this.unreadMessages.filter(
+    (id) => id.toString() !== messageId.toString()
+  );
+  return this.save();
+};
+
+// Method to clear all unread messages
+userSchema.methods.clearUnreadMessages = function () {
+  this.unreadMessages = [];
+  return this.save();
+};
+
+// Method to get unread messages count
+userSchema.methods.getUnreadCount = function () {
+  return this.unreadMessages.length;
 };
 
 const User = mongoose.model("User", userSchema);
