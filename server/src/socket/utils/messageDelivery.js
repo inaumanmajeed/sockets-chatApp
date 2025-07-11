@@ -95,8 +95,6 @@ export const autoMarkMessagesAsDelivered = async (userId, socketId, io) => {
     }
 
     if (totalUpdated > 0) {
-      console.log(`✅ Auto-marked ${totalUpdated} messages as delivered`);
-
       // Emit batch delivery notification to user
       io.to(socketId).emit("batchDeliveryUpdate", {
         count: totalUpdated,
@@ -106,36 +104,5 @@ export const autoMarkMessagesAsDelivered = async (userId, socketId, io) => {
     }
   } catch (error) {
     console.error("Error auto-marking pending messages as delivered:", error);
-  }
-};
-
-// Mark a single message as delivered when sent to online user
-export const markMessageAsDelivered = async (messageId, chatId, io) => {
-  try {
-    const userChat = await UserChat.findById(chatId);
-    if (!userChat) return;
-
-    const message = userChat.messages.id(messageId);
-    if (!message || message.status !== "sent") return;
-
-    message.status = "delivered";
-    await userChat.save();
-
-    // Notify all participants about the status change
-    userChat.participants.forEach(async (participantId) => {
-      const participant = await User.findById(participantId);
-      if (participant && participant.socketId && participant.isOnline) {
-        io.to(participant.socketId).emit("messageStatusUpdated", {
-          chatId: userChat._id,
-          messageId: message._id,
-          status: "delivered",
-          updatedMessage: message,
-        });
-      }
-    });
-
-    console.log(`✅ Message ${messageId} marked as delivered`);
-  } catch (error) {
-    console.error("Error marking message as delivered:", error);
   }
 };

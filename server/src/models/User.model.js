@@ -1,13 +1,14 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { getPakistanTime } from "../socket/utils/timezone.js";
 
 const userSchema = new Schema(
   {
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    lastSeen: { type: Date, default: Date.now },
+    lastSeen: { type: Date, default: () => new Date(getPakistanTime()) },
     profilePicture: { type: String, default: "" },
     isOnline: { type: Boolean, default: false },
     socketId: { type: String, default: "" }, // Store socket ID for real-time updates
@@ -72,26 +73,6 @@ userSchema.methods.generateRefreshToken = function () {
   const options = { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION };
   this.refreshToken = jwt.sign(payload, secret, options);
   return this.refreshToken;
-};
-
-// Method to update last seen time
-userSchema.methods.updateLastSeen = function () {
-  this.lastSeen = Date.now();
-  return this.save();
-};
-
-// Method to set online status
-userSchema.methods.setOnline = function (socketId) {
-  this.isOnline = true;
-  this.socketId = socketId; // Store the socket ID for real-time updates
-  return this.save();
-};
-
-// Method to set offline status
-userSchema.methods.setOffline = function () {
-  this.isOnline = false;
-  this.socketId = ""; // Clear the socket ID when going offline
-  return this.save();
 };
 
 // Method to add a friend

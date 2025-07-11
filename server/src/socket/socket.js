@@ -1,22 +1,25 @@
 import { Server } from "socket.io";
 import { CORS_ORIGIN } from "../constants/index.js";
 import { createAuthMiddleware } from "./middleware/authMiddleware.js";
-import { handleConnection, handleDisconnection } from "./handlers/connectionHandler.js";
-import { 
-  handleRegisterUser, 
-  handleLoginUser, 
-  handleRefreshAccessToken 
+import {
+  handleConnection,
+  handleDisconnection,
+} from "./handlers/connectionHandler.js";
+import {
+  handleRegisterUser,
+  handleLoginUser,
+  handleRefreshAccessToken,
 } from "./handlers/authHandler.js";
-import { 
-  handleSendPrivateMessage, 
-  handleGetChatHistory, 
-  handleMarkMessagesAsSeen, 
-  handleUpdateMessageStatus 
+import {
+  handleSendPrivateMessage,
+  handleGetChatHistory,
+  handleMarkMessagesAsSeen,
+  handleUpdateMessageStatus,
 } from "./handlers/messageHandler.js";
-import { 
-  handleSearchUsers, 
-  handleGetFriendsList, 
-  handleGetUnreadCount 
+import {
+  handleSearchUsers,
+  handleGetFriendsList,
+  handleGetUnreadCount,
 } from "./handlers/userHandler.js";
 
 const initializeSocketIO = (app) => {
@@ -27,12 +30,12 @@ const initializeSocketIO = (app) => {
     },
   });
 
-  // Apply authentication middleware
-  io.use(createAuthMiddleware(io));
+  // Apply connection middleware
+  io.use(createAuthMiddleware());
 
   // Handle new socket connections
   io.on("connection", (socket) => {
-    handleConnection(socket, io);
+    handleConnection(socket);
 
     // =======================================================================================
     // AUTHENTICATION HANDLERS
@@ -45,16 +48,16 @@ const initializeSocketIO = (app) => {
     // MESSAGE HANDLERS
     // =======================================================================================
     socket.on("sendPrivateMessageToUser", handleSendPrivateMessage(socket, io));
-    socket.on("getChatHistory", handleGetChatHistory(socket));
+    socket.on("getChatHistory", handleGetChatHistory(socket, io));
     socket.on("markMessagesAsSeen", handleMarkMessagesAsSeen(socket, io));
     socket.on("updateMessageStatus", handleUpdateMessageStatus(socket, io));
 
     // =======================================================================================
     // USER HANDLERS
     // =======================================================================================
-    socket.on("searchUsersWithUsername", handleSearchUsers(socket));
-    socket.on("getFriendsList", handleGetFriendsList(socket));
-    socket.on("getUnreadCount", handleGetUnreadCount(socket));
+    socket.on("searchUsersWithUsername", handleSearchUsers(socket, io));
+    socket.on("getFriendsList", handleGetFriendsList(socket, io));
+    socket.on("getUnreadCount", handleGetUnreadCount(socket, io));
 
     // =======================================================================================
     // DISCONNECTION HANDLER

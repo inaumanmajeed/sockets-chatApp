@@ -1,9 +1,17 @@
 import User from "../../models/User.model.js";
 import UserChat from "../../models/userChats.model.js";
+import { authenticateSocket } from "../middleware/authMiddleware.js";
 
 // Handle sending private messages
 export const handleSendPrivateMessage = (socket, io) => {
   return async (messageData) => {
+    // Check if user is already authenticated on socket
+    if (!socket.user) {
+      // Authenticate the socket
+      const user = await authenticateSocket(socket, io);
+      if (!user) return; // Authentication failed
+    }
+
     const { recipientId, message } = messageData;
     try {
       // Validate recipient ID
@@ -119,8 +127,15 @@ export const handleSendPrivateMessage = (socket, io) => {
 };
 
 // Handle getting chat history
-export const handleGetChatHistory = (socket) => {
+export const handleGetChatHistory = (socket, io) => {
   return async (data) => {
+    // Check if user is already authenticated on socket
+    if (!socket.user) {
+      // Authenticate the socket
+      const user = await authenticateSocket(socket, io);
+      if (!user) return; // Authentication failed
+    }
+
     console.log("🔍 Get chat history request:", data);
     const { userId } = data;
 
@@ -166,6 +181,13 @@ export const handleGetChatHistory = (socket) => {
 // Handle marking messages as seen
 export const handleMarkMessagesAsSeen = (socket, io) => {
   return async (data) => {
+    // Check if user is already authenticated on socket
+    if (!socket.user) {
+      // Authenticate the socket
+      const user = await authenticateSocket(socket, io);
+      if (!user) return; // Authentication failed
+    }
+
     console.log("👁️ Mark messages as seen request:", data);
     const { chatPartnerId } = data;
 
@@ -242,6 +264,13 @@ export const handleMarkMessagesAsSeen = (socket, io) => {
 // Handle updating message status (kept for backward compatibility)
 export const handleUpdateMessageStatus = (socket, io) => {
   return async (data) => {
+    // Check if user is already authenticated on socket
+    if (!socket.user) {
+      // Authenticate the socket
+      const user = await authenticateSocket(socket, io);
+      if (!user) return; // Authentication failed
+    }
+
     console.log("🔄 Update message status request:", data);
     const { messageId, status, chatPartnerId } = data;
 

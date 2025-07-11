@@ -1,9 +1,16 @@
 import User from "../../models/User.model.js";
 import UserChat from "../../models/userChats.model.js";
+import { authenticateSocket } from "../middleware/authMiddleware.js";
 
 // Handle searching users by username
-export const handleSearchUsers = (socket) => {
+export const handleSearchUsers = (socket, io) => {
   return async (searchData) => {
+    // Check if user is already authenticated on socket
+    if (!socket.user) {
+      // Authenticate the socket
+      const user = await authenticateSocket(socket, io);
+      if (!user) return; // Authentication failed
+    }
     try {
       let query = {};
       let projection = { password: 0, refreshToken: 0, accessToken: 0 };
@@ -39,8 +46,14 @@ export const handleSearchUsers = (socket) => {
 };
 
 // Handle getting friends list
-export const handleGetFriendsList = (socket) => {
+export const handleGetFriendsList = (socket, io) => {
   return async () => {
+    // Check if user is already authenticated on socket
+    if (!socket.user) {
+      // Authenticate the socket
+      const user = await authenticateSocket(socket, io);
+      if (!user) return; // Authentication failed
+    }
     try {
       // Find the user and populate the friends list
       const userWithFriends = await User.findById(socket.user._id)
@@ -73,12 +86,17 @@ export const handleGetFriendsList = (socket) => {
 };
 
 // Handle getting unread message count
-export const handleGetUnreadCount = (socket) => {
+export const handleGetUnreadCount = (socket, io) => {
   return async () => {
+    // Check if user is already authenticated on socket
+    if (!socket.user) {
+      // Authenticate the socket
+      const user = await authenticateSocket(socket, io);
+      if (!user) return; // Authentication failed
+    }
     try {
       // Get the user's unread messages count
-      const user = await User.findById(socket.user._id);
-      const totalUnread = user.getUnreadCount();
+      const totalUnread = socket.user.getUnreadCount();
 
       // Find all chats where this user has unread messages for detailed breakdown
       const unreadChats = await UserChat.find({
